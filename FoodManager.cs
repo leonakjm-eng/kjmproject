@@ -24,7 +24,6 @@ public class FoodManager : MonoBehaviour
 
     void Update()
     {
-        // Timer
         timer += Time.deltaTime;
         if (timer >= spawnInterval)
         {
@@ -32,7 +31,6 @@ public class FoodManager : MonoBehaviour
             AddFood();
         }
 
-        // Input
         HandleInput();
     }
 
@@ -44,7 +42,6 @@ public class FoodManager : MonoBehaviour
         }
         else
         {
-            // Overflow -> Falling Food
             SpawnFallingFood();
         }
     }
@@ -54,27 +51,25 @@ public class FoodManager : MonoBehaviour
         Camera cam = Camera.main;
         if (cam == null) return;
 
-        // 15th Slot (Rightmost)
-        // Assume Top Right of screen (Viewport 0.95, 0.9)
-        // Z distance = 15 (Height of camera)
         Vector3 spawnPos = cam.ViewportToWorldPoint(new Vector3(0.95f, 0.9f, 15f));
 
         GameObject food = Instantiate(foodPrefab, spawnPos, Quaternion.identity);
         food.tag = "Food";
-        // Food prefab should have Rigidbody with Gravity Enabled by default
     }
 
-    public void OnFoodEaten()
+    public void OnFoodEaten(GameObject food)
     {
-        // Callback if needed (e.g. stats)
+        if (food == draggingFood)
+        {
+            draggingFood = null;
+            isDragging = false;
+        }
     }
 
     void HandleInput()
     {
-        // Touch or Mouse
         if (Input.GetMouseButtonDown(0))
         {
-            // Check click on "UI Area" (Top 20% of screen)
             Vector3 viewportPos = Camera.main.ScreenToViewportPoint(Input.mousePosition);
             if (viewportPos.y > 0.8f && currentFoodStorage > 0)
             {
@@ -103,7 +98,7 @@ public class FoodManager : MonoBehaviour
         if (ground.Raycast(ray, out float enter))
         {
             Vector3 point = ray.GetPoint(enter);
-            point.y = 2.0f; // Floating Height
+            point.y = 2.0f;
 
             draggingFood = Instantiate(foodPrefab, point, Quaternion.identity);
             draggingFood.tag = "Food";
@@ -112,7 +107,7 @@ public class FoodManager : MonoBehaviour
             if (rb)
             {
                 rb.useGravity = false;
-                rb.isKinematic = true; // Disable physics during drag
+                rb.isKinematic = true;
             }
         }
     }
@@ -148,7 +143,6 @@ public class FoodManager : MonoBehaviour
 
     void OnGUI()
     {
-        // Simple Debug UI for Storage
         GUIStyle style = new GUIStyle();
         style.fontSize = 24;
         style.normal.textColor = Color.white;

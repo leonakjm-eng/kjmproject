@@ -16,9 +16,9 @@ public class FishController : MonoBehaviour
     private int eatCount = 0;
     private float speedBonus = 0f;
 
-    // Bounds (Calculated from Camera)
+    // Bounds
     private float xBound = 8.0f;
-    private float zBound = 4.5f;
+    private float zBound = 14.0f;
 
     void Start()
     {
@@ -28,6 +28,11 @@ public class FishController : MonoBehaviour
 
         CalculateBounds();
         ChangeRandomDirection();
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.RegisterFish(this);
+        }
     }
 
     void CalculateBounds()
@@ -36,7 +41,6 @@ public class FishController : MonoBehaviour
         if (cam == null) return;
 
         float dist = Mathf.Abs(cam.transform.position.y);
-        // Assuming Perspective Camera
         float height = 2.0f * dist * Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
         float width = height * cam.aspect;
 
@@ -46,10 +50,8 @@ public class FishController : MonoBehaviour
 
     void Update()
     {
-        // 1. AI: Find Food
         FindTargetFood();
 
-        // 2. Determine Direction
         if (currentTargetFood != null)
         {
             Vector3 dir = (currentTargetFood.position - transform.position).normalized;
@@ -65,14 +67,12 @@ public class FishController : MonoBehaviour
             }
         }
 
-        // 3. Rotation (LookAt)
         if (targetDirection != Vector3.zero)
         {
             Quaternion targetRot = Quaternion.LookRotation(targetDirection);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotationSpeed * Time.deltaTime);
         }
 
-        // 4. Boundary Clamp
         Vector3 pos = transform.position;
         pos.x = Mathf.Clamp(pos.x, -xBound, xBound);
         pos.z = Mathf.Clamp(pos.z, -zBound, zBound);
@@ -82,8 +82,12 @@ public class FishController : MonoBehaviour
 
     void FixedUpdate()
     {
-        // 5. Physics Movement
-        float levelMultiplier = GameManager.Instance.GetSpeedMultiplier();
+        float levelMultiplier = 1.0f;
+        if (GameManager.Instance != null)
+        {
+            levelMultiplier = GameManager.Instance.GetSpeedMultiplier();
+        }
+
         float currentSpeed = (baseSpeed + speedBonus) * levelMultiplier;
 
         if (currentTargetFood != null)
@@ -124,17 +128,18 @@ public class FishController : MonoBehaviour
         }
         else if (collision.gameObject.CompareTag("Fish"))
         {
-            // Predation Logic
             FishController other = collision.gameObject.GetComponent<FishController>();
             if (other != null)
             {
                 float mySize = transform.localScale.x;
                 float otherSize = other.transform.localScale.x;
 
-                // 30% larger to eat
                 if (mySize > otherSize * 1.3f)
                 {
-                    GameManager.Instance.OnFishDied(collision.gameObject);
+                    if (GameManager.Instance != null)
+                    {
+                        GameManager.Instance.OnFishDied(collision.gameObject);
+                    }
                     Destroy(collision.gameObject);
                 }
             }
@@ -144,14 +149,10 @@ public class FishController : MonoBehaviour
     void Eat(GameObject food)
     {
         Destroy(food);
-        if (FoodManager.Instance != null) FoodManager.Instance.OnFoodEaten();
+        if (FoodManager.Instance != null) FoodManager.Instance.OnFoodEaten(food);
 
-        // Growth
         transform.localScale *= 1.1f;
-
-        // Speed Up
         speedBonus += 0.2f;
-
         eatCount++;
 
         if (eatCount >= 3)
@@ -166,7 +167,6 @@ public class FishController : MonoBehaviour
         GameObject clone = Instantiate(gameObject, transform.position, Quaternion.identity);
         FishController fc = clone.GetComponent<FishController>();
         fc.ResetState();
-        GameManager.Instance.RegisterFish(clone);
     }
 
     public void ResetState()

@@ -1,0 +1,35 @@
+Unity Editor Setup Instructions
+
+1. Scene
+   - Main Camera: Position (0, 15, 0), Rotation (90, 0, 0).
+   - Ground Plane (Optional for visual): Position (0,0,0).
+
+2. Tags
+   - Add Tag "Fish".
+   - Add Tag "Food".
+
+3. Prefabs
+   [Fish]
+   - Create Sphere -> "FishPrefab".
+   - Tag: "Fish".
+   - Components: Rigidbody (No Gravity, Constraints Y/RotXZ), SphereCollider, FishController.
+
+   [Food]
+   - Create Sphere (Smaller) -> "FoodPrefab".
+   - Tag: "Food".
+   - Components: Rigidbody (Use Gravity), SphereCollider.
+
+4. Managers
+   [GameManager]
+   - Create Empty GameObject -> "GameManager".
+   - Add GameManager.cs.
+   - Assign "FishPrefab".
+
+   [FoodManager]
+   - Create Empty GameObject -> "FoodManager".
+   - Add FoodManager.cs.
+   - Assign "FoodPrefab".
+
+5. Play
+   - Verify UI labels in Top Left.
+   - Click top area to drag food.
