@@ -104,6 +104,9 @@ public class FishController : MonoBehaviour
 
         foreach (var food in foods)
         {
+            // Fix: Ignore shelf food (High Y)
+            if (food.transform.position.y >= 10.0f) continue;
+
             float d = Vector3.Distance(transform.position, food.transform.position);
             if (d < closestDist)
             {
@@ -122,6 +125,16 @@ public class FishController : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
+        HandleCollision(collision);
+    }
+
+    void OnCollisionStay(Collision collision)
+    {
+        HandleCollision(collision);
+    }
+
+    void HandleCollision(Collision collision)
+    {
         if (collision.gameObject.CompareTag("Food"))
         {
             Eat(collision.gameObject);
@@ -134,6 +147,7 @@ public class FishController : MonoBehaviour
                 float mySize = transform.localScale.x;
                 float otherSize = other.transform.localScale.x;
 
+                // Fix: Robust Predation Logic
                 if (mySize > otherSize * 1.3f)
                 {
                     if (GameManager.Instance != null)
@@ -148,6 +162,12 @@ public class FishController : MonoBehaviour
 
     void Eat(GameObject food)
     {
+        if (food == null) return;
+
+        // Prevent double eating logic if multiple frames trigger collision before destroy
+        if (!food.activeSelf) return;
+        food.SetActive(false); // Hide immediately
+
         Destroy(food);
         if (FoodManager.Instance != null) FoodManager.Instance.OnFoodEaten(food);
 
@@ -164,9 +184,13 @@ public class FishController : MonoBehaviour
 
     void Reproduce()
     {
+        // Fix: Population Cap
+        if (GameManager.Instance != null && GameManager.Instance.GetCurrentFishCount() >= 18) return;
+
         GameObject clone = Instantiate(gameObject, transform.position, Quaternion.identity);
         FishController fc = clone.GetComponent<FishController>();
         fc.ResetState();
+        // RegisterFish called in Start
     }
 
     public void ResetState()

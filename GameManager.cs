@@ -47,6 +47,11 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public int GetCurrentFishCount()
+    {
+        return fishes.Count;
+    }
+
     void LevelUp()
     {
         // Death Redemption
