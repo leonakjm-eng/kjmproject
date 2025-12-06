@@ -47,6 +47,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // Fixed: Added missing method
     public int GetCurrentFishCount()
     {
         return fishes.Count;
