@@ -1,0 +1,48 @@
+Unity Editor Setup Instructions for Fish Tank Game
+
+1. Scene Setup
+   - Create a new 3D URP Scene.
+   - Camera:
+     - Position: (0, 15, 0)
+     - Rotation: (90, 0, 0)
+     - Projection: Perspective (Field of View 60).
+     - Tag: "MainCamera".
+
+2. Ground Plane (for Raycasting)
+   - Create a Plane at Position (0, 0, 0).
+   - Scale: (3, 1, 2) to cover the view.
+   - Remove Mesh Renderer if you want invisible input plane, or apply Water material.
+   - Ensure it has a Mesh Collider.
+
+3. Manager Objects
+   - Create Empty GameObject "GameManager". Attach GameManager.cs script.
+   - Create Empty GameObject "FoodManager". Attach FoodManager.cs script.
+
+4. Prefab Setup
+   [Fish Prefab]
+   - Create a Sphere (Scale 1, 1, 1).
+   - Tag: "Fish".
+   - Components:
+     - Rigidbody: Use Gravity = False, Is Kinematic = False.
+       - Constraints: Freeze Position Y, Freeze Rotation X, Z.
+     - Sphere Collider.
+     - FishController.cs script.
+   - Drag to Project window to create Prefab.
+   - Assign this Prefab to GameManager's "Fish Prefab" field.
+
+   [Food Prefab]
+   - Create a Sphere (Scale 0.5, 0.5, 0.5).
+   - Tag: "Food".
+   - Components:
+     - Rigidbody: Use Gravity = True.
+     - Sphere Collider.
+   - Drag to Project window to create Prefab.
+   - Assign this Prefab to FoodManager's "Food Prefab" field.
+
+5. Project Settings
+   - Ensure Input Manager (Legacy) is active (Project Settings > Player > Active Input Handling: Both or Input Manager).
+   - Add Tags "Fish" and "Food" in Tag Manager.
+
+6. Play
+   - Press Play. Fish should spawn.
+   - Click top area to drag/drop food.
