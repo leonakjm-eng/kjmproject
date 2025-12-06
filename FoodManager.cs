@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class FoodManager : MonoBehaviour
 {
@@ -6,10 +7,13 @@ public class FoodManager : MonoBehaviour
 
     [Header("Settings")]
     public GameObject foodPrefab;
+    public Transform spawnPoint; // New Variable
     public int maxFoodStorage = 15;
     public float spawnInterval = 2.0f;
 
-    private int currentFoodStorage = 0;
+    // Storage
+    public List<GameObject> foodQueue = new List<GameObject>();
+
     private float timer = 0f;
 
     // Dragging
@@ -36,9 +40,12 @@ public class FoodManager : MonoBehaviour
 
     void AddFood()
     {
-        if (currentFoodStorage < maxFoodStorage)
+        if (foodQueue.Count < maxFoodStorage)
         {
-            currentFoodStorage++;
+            // Instantiate and store (Inactive until dragged)
+            GameObject food = Instantiate(foodPrefab, Vector3.zero, Quaternion.identity);
+            food.SetActive(false);
+            foodQueue.Add(food);
         }
         else
         {
@@ -48,17 +55,21 @@ public class FoodManager : MonoBehaviour
 
     void SpawnFallingFood()
     {
-        Camera cam = Camera.main;
-        if (cam == null) return;
-
-        Vector3 spawnPos = cam.ViewportToWorldPoint(new Vector3(0.95f, 0.9f, 15f));
-
-        GameObject food = Instantiate(foodPrefab, spawnPos, Quaternion.identity);
-        food.tag = "Food";
+        if (spawnPoint != null)
+        {
+            GameObject food = Instantiate(foodPrefab, spawnPoint.position, Quaternion.identity);
+            food.tag = "Food";
+        }
     }
 
     public void OnFoodEaten(GameObject food)
     {
+        // Explicit removal logic
+        if (foodQueue.Contains(food))
+        {
+            foodQueue.Remove(food);
+        }
+
         if (food == draggingFood)
         {
             draggingFood = null;
@@ -71,7 +82,8 @@ public class FoodManager : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             Vector3 viewportPos = Camera.main.ScreenToViewportPoint(Input.mousePosition);
-            if (viewportPos.y > 0.8f && currentFoodStorage > 0)
+            // Click Top Area to grab from Queue
+            if (viewportPos.y > 0.8f && foodQueue.Count > 0)
             {
                 StartDrag();
             }
@@ -90,29 +102,29 @@ public class FoodManager : MonoBehaviour
 
     void StartDrag()
     {
-        currentFoodStorage--;
+        draggingFood = foodQueue[0];
+        foodQueue.RemoveAt(0);
+
+        draggingFood.SetActive(true);
+        draggingFood.tag = "Food";
         isDragging = true;
 
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        Plane ground = new Plane(Vector3.up, Vector3.zero);
-        if (ground.Raycast(ray, out float enter))
+        MoveToCursor();
+
+        Rigidbody rb = draggingFood.GetComponent<Rigidbody>();
+        if (rb)
         {
-            Vector3 point = ray.GetPoint(enter);
-            point.y = 2.0f;
-
-            draggingFood = Instantiate(foodPrefab, point, Quaternion.identity);
-            draggingFood.tag = "Food";
-
-            Rigidbody rb = draggingFood.GetComponent<Rigidbody>();
-            if (rb)
-            {
-                rb.useGravity = false;
-                rb.isKinematic = true;
-            }
+            rb.useGravity = false;
+            rb.isKinematic = true;
         }
     }
 
     void Drag()
+    {
+        MoveToCursor();
+    }
+
+    void MoveToCursor()
     {
         if (draggingFood == null) return;
 
@@ -146,6 +158,6 @@ public class FoodManager : MonoBehaviour
         GUIStyle style = new GUIStyle();
         style.fontSize = 24;
         style.normal.textColor = Color.white;
-        GUI.Label(new Rect(10, 10, 300, 50), $"Food Storage: {currentFoodStorage} / {maxFoodStorage}", style);
+        GUI.Label(new Rect(10, 10, 300, 50), $"Food Queue: {foodQueue.Count} / {maxFoodStorage}", style);
     }
 }
